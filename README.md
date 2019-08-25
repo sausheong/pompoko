@@ -269,6 +269,8 @@ It uses [Mako](https://www.makotemplates.org) for templating and we have a separ
 </html>
 ```
 
+![view all posts](images/view_all_posts.png)
+
 ## Summary
 
 This is a very simple sample web app and lacks many capabilities and is used to show how a Tanuki app can be written. Feel free to change them, add new handlers or use different languages!
