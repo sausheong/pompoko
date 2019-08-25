@@ -1,0 +1,28 @@
+--- # handlers
+# shows all blog posts
+# uses a Python listener
+- method : get
+  route  : /_/poko
+  type   : listener
+  local  : true
+  path   : handlers/main
+
+# show the create page
+- method : get
+  route  : /_/poko/create
+  type   : bin
+  path   : handlers/create
+
+# creates the post
+# it is using the same handler as the create page
+- method : post
+  route  : /_/poko/create
+  type   : bin
+  path   : handlers/create
+
+# view a single post
+- method : get
+  route  : /_/poko/view
+  type   : bin
+  path   : handlers/view
+  

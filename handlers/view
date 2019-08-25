@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'redis'
+require 'redcarpet'
+
+# get request from Tanuki
+request = JSON.parse ARGV[0]
+markdown = Redcarpet::Markdown.new(Redcarpet::Render::HTML.new(render_options = {}))
+
+#  get the id from the parameter
+id = request['Params']['id'][0]
+# use the id to get the correct post
+redis = Redis.new
+post = JSON.parse redis.get(id)
+
+# render the template and create the response
+response = {
+    status: 200,
+    header: {},
+    body: DATA.read % [post['title'], markdown.render(post['content'])]
+}
+# send response back to Tanuki
+puts response.to_json 
+
+__END__
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pom Poko Blog</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  </head>
+  <body>
+        <div class="container">
+        <h1><img src="/_s/pompoko.png" height="60px"> Pom Poko!</h1>
+            <h2>%s</h2>
+            <div>
+                %s
+            </div>
+            <a href="/_/poko/create">New post</a> | <a href="/_/poko">main</a>
+        </div>
+
+  </body>
+</html>

@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'redis'
+
+# get the request from Tanuki
+request = JSON.parse ARGV[0]
+
+response = {
+    status: 200,
+    header: {},
+    body: ""
+}
+
+# create a post
+def create(post) 
+    redis = Redis.new
+    # the id is incremented from the key uuid
+    id = redis.incr "uuid"
+    redis.set(id, post.to_json)
+    return id
+end
+
+case request["Method"]
+# when the request is a GET
+when "GET"
+    response["body"] = DATA.read
+# when the request is a POST
+when "POST"
+    # create the post as a hash
+    post = {
+        title: request['Params']['title'][0],
+        content: request['Params']['content'][0]
+    }
+    # create the post in redis and get the id
+    id = create post
+
+    # redirect the user to the view action with the given id
+    response['status'] = 301
+    response['header'] = {
+        Location: ["/_/poko/view?id=#{id}"]
+    }
+else
+    response["status"] = 500
+    response["body"] = "No such request"
+end
+# send the response to Tanuki
+puts response.to_json
+
+__END__
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pom Poko Blog</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  </head>
+  <body>
+    <form action="/_/poko/create" method="post">
+        <div class="container">
+            <h1><img src="/_s/pompoko.png" height="60px"> Pom Poko!</h1>
+            <h2>Create a blog post</h2>
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" class="form-control" name="title" id="title" required>
+            </div>
+            <div class="form-group">            
+                <label for="content">Content</label>
+                <textarea class="form-control" name="content" id="content" rows="6"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create</button>
+            <a href="/_/poko" class="btn btn-danger">Cancel</a>
+        </div>
+    </form>
+  </body>
+</html>

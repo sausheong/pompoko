@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+import socket
+import sys
+import json
+import redis
+from mako.template import Template
+
+HOST = '0.0.0.0'
+PORT = sys.argv[1]
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    r = redis.Redis(host=HOST, port=6379, db=0)
+    s.bind((HOST, int(PORT)))
+    s.listen()    
+    while True:
+        conn, addr = s.accept()
+        with conn:
+            # get request from Tanuki
+            data = conn.recv(1024)
+            # get template from file
+            t = Template(filename="handlers/main.mako")                    
+            # a list of posts to be retrieved from redis 
+            posts = []
+            # populate the list from redis
+            keys = sorted(r.keys("*"), reverse=True)
+            for k in keys:
+                if k != b'uuid':
+                    posts.append(json.loads(r.get(k)))
+            # render the template, passing it the posts and create a reponse
+            response = {
+                'status': 200,
+                'header': {},
+                'body': t.render(posts=posts)
+            }
+            # send the response back to Tanuki
+            conn.sendall(str.encode(json.dumps(response) + "\n", 'utf-8' ))
